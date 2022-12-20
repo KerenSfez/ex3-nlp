@@ -375,10 +375,6 @@ def binary_accuracy(preds, y):
     return np.mean(preds == y)
 
 
-def training_model(model, data_iterator, criterion, optimizer=None):
-
-
-
 def train_epoch(model, data_iterator, optimizer, criterion):
     """
     This method operates one epoch (pass over the whole train set) of training of the given model,
@@ -388,8 +384,22 @@ def train_epoch(model, data_iterator, optimizer, criterion):
     :param optimizer: the optimizer object for the training process.
     :param criterion: the criterion object for the training process.
     """
-    # todo: need to be implemented
-    return
+    # todo: almost done a checker car gpt
+    model.train()
+    final_loss, final_acc = 0.0, 0.0
+
+    for inputs, lab in data_iterator:
+        optimizer.zero_grad()
+        outputs, _ = model(inputs)
+        loss = criterion(outputs.view(-1, outputs.shape[-1]), lab.view(-1))
+        loss.backward()
+        optimizer.step()
+        final_loss += loss.item()
+        final_acc += binary_accuracy(outputs, lab) # binary_accuracy(nn.Sigmoid()(outputs)
+
+    final_loss /= len(data_iterator)
+    final_acc /= len(data_iterator)
+    return final_loss, final_acc
 
 
 def evaluate(model, data_iterator, criterion):
@@ -400,8 +410,24 @@ def evaluate(model, data_iterator, criterion):
     :param criterion: the loss criterion used for evaluation
     :return: tuple of (average loss over all examples, average accuracy over all examples)
     """
-    # todo: need to be implemented
-    return
+    # todo: almost done a checker car gpt
+    model.eval()
+    final_loss, final_correct = 0, 0
+    num_examples = 0
+
+    with torch.no_grad():
+        for inputs, lab in data_iterator:
+            outputs = model(inputs)
+            loss = criterion(outputs, lab)
+            final_loss += loss.item() * inputs.size(0)
+            _, predictions = torch.max(outputs, dim=1)
+            final_correct += (torch.where(predictions == lab, torch.ones_like(predictions), torch.zeros_like(predictions)).sum().item())
+            num_examples += inputs.size(0)
+
+    final_loss /= num_examples
+    final_correct /= num_examples
+
+    return final_loss, final_correct
 
 
 def get_predictions_for_data(model, data_iter):
@@ -414,8 +440,11 @@ def get_predictions_for_data(model, data_iter):
     :param data_iter: torch iterator as given by the DataManager
     :return:
     """
-    # todo: need to be implemented
-    return
+    # todo: done sam
+    predictions = []
+    for ex in data_iter:
+        predictions.extend(model.predict(ex[0]))
+    return np.array(predictions)
 
 
 def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
@@ -428,8 +457,25 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     :param lr: learning rate to be used for optimization
     :param weight_decay: parameter for l2 regularization
     """
-    # todo: need to be implemented
-    return
+    # todo: done
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    train_loss = []
+    train_acc = []
+    valid_loss = []
+    valid_acc = []
+
+    for epoch in range(n_epochs):
+        avg_loss, avg_acc = train_epoch(model, data_manager.get_torch_iterator(data_subset=TRAIN), optimizer, F.cross_entropy)
+        train_loss.append(avg_loss)
+        train_acc.append(avg_acc)
+
+        val_loss, val_acc = evaluate(model, data_manager.get_torch_iterator(data_subset=VAL), F.cross_entropy)
+        valid_loss.append(val_loss)
+        valid_acc.append(val_acc)
+
+    return train_loss, train_acc, valid_loss, valid_acc
+
 
 
 def train_log_linear_with_one_hot():
