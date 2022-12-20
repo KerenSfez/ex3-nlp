@@ -1,0 +1,7 @@
+- sentence data set is a tree > subtree = subphrase with a sentimental value
+
+- data_loader used to:
+    - load the data from dataset both sentences and sub-sentences, as well as their binary label
+    - split the data into train
+    - validation
+    - test sets
