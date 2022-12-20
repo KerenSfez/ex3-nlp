@@ -24,7 +24,7 @@ VAL = "val"
 TEST = "test"
 
 
-# ------------------------------------------ Helper methods and classes --------------------------
+# TODO: not edit ------------------------------------------ Helper methods and classes --------------------------
 
 def get_available_device():
     """
@@ -61,7 +61,7 @@ def save_model(model, path, epoch, optimizer):
 
 def load(model, path, optimizer):
     """
-    Loads the state (weights, paramters...) of a model which was saved with save_model
+    Loads the state (weights, parameters...) of a model which was saved with save_model
     :param model: should be the same model as the one which was saved in the path
     :param path: path to the saved checkpoint
     :param optimizer: should be the same optimizer as the one which was saved in the path
@@ -108,14 +108,21 @@ def create_or_load_slim_w2v(words_list, cache_w2v=False):
 
 def get_w2v_average(sent, word_to_vec, embedding_dim):
     """
-    This method gets a sentence and returns the average word embedding of the words consisting
-    the sentence.
+    This method gets a sentence and returns the average word embedding of
+    the words consisting the sentence.
     :param sent: the sentence object
     :param word_to_vec: a dictionary mapping words to their vector embeddings
     :param embedding_dim: the dimension of the word embedding vectors
     :return The average embedding vector as numpy ndarray.
     """
-    return
+    # todo: done
+    w2v_average = np.zeros(embedding_dim)
+    num_words = 0
+    for word in sent.text:
+        if word in word_to_vec:
+            w2v_average += word_to_vec[word]
+            num_words += 1
+    return w2v_average/num_words if num_words > 0 else w2v_average
 
 
 def get_one_hot(size, ind):
@@ -125,18 +132,26 @@ def get_one_hot(size, ind):
     :param ind: the entry index to turn to 1
     :return: numpy ndarray which represents the one-hot vector
     """
-    return
+    # todo: done
+    oh_v = np.zeros(size, dtype=np.float64)
+    oh_v[ind] = 1
+    return oh_v
 
 
 def average_one_hots(sent, word_to_ind):
     """
-    this method gets a sentence, and a mapping between words to indices, and returns the average
-    one-hot embedding of the tokens in the sentence.
+    this method gets a sentence, and a mapping between words to indices,
+    and returns the average one-hot embedding of the tokens in the sentence.
     :param sent: a sentence object.
     :param word_to_ind: a mapping between words to indices
     :return:
     """
-    return
+    # todo: done
+    ind = [word_to_ind[word] for word in sent]
+    num_words = len(word_to_ind)
+    oh_v = get_one_hot(num_words, ind)
+    total = np.sum(oh_v)
+    return oh_v/total
 
 
 def get_word_to_ind(words_list):
@@ -146,7 +161,9 @@ def get_word_to_ind(words_list):
     :param words_list: a list of words
     :return: the dictionary mapping words to the index
     """
-    return
+    # todo: done
+    num_words = len(words_list)
+    return {words_list[i]: i for i in range(num_words)}
 
 
 def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
@@ -159,7 +176,14 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     :param embedding_dim: the dimension of the w2v embedding
     :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-    return
+    # todo: need to be implemented - done mais different de sam donc a checker
+    mylist = np.zeros(shape=(seq_len, embedding_dim))
+    outer_bound = min(len(sent.text), seq_len)
+    seq = sent[:outer_bound]
+    for i, word in enumerate(len(seq)):
+        if word in word_to_vec:
+            mylist[i] = word_to_vec[word]
+    return mylist
 
 
 class OnlineDataset(Dataset):
@@ -273,12 +297,15 @@ class LSTM(nn.Module):
     An LSTM for sentiment analysis with architecture as described in the exercise description.
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
+        # todo: need to be implemented
         return
 
     def forward(self, text):
+        # todo: need to be implemented
         return
 
     def predict(self, text):
+        # todo: need to be implemented
         return
 
 
@@ -287,12 +314,15 @@ class LogLinear(nn.Module):
     general class for the log-linear models for sentiment analysis.
     """
     def __init__(self, embedding_dim):
+        # todo: need to be implemented
         return
 
     def forward(self, x):
+        # todo: need to be implemented
         return
 
     def predict(self, x):
+        # todo: need to be implemented
         return
 
 
@@ -301,14 +331,15 @@ class LogLinear(nn.Module):
 
 def binary_accuracy(preds, y):
     """
-    This method returns tha accuracy of the predictions, relative to the labels.
+    This method returns the accuracy of the predictions, relative to the labels.
     You can choose whether to use numpy arrays or tensors here.
     :param preds: a vector of predictions
     :param y: a vector of true labels
     :return: scalar value - (<number of accurate predictions> / <number of examples>)
     """
+    # todo: done - need to change numpy to tensors
+    return np.mean(preds == y)
 
-    return
 
 
 def train_epoch(model, data_iterator, optimizer, criterion):
@@ -320,7 +351,7 @@ def train_epoch(model, data_iterator, optimizer, criterion):
     :param optimizer: the optimizer object for the training process.
     :param criterion: the criterion object for the training process.
     """
-
+    # todo: need to be implemented
     return
 
 
@@ -332,6 +363,7 @@ def evaluate(model, data_iterator, criterion):
     :param criterion: the loss criterion used for evaluation
     :return: tuple of (average loss over all examples, average accuracy over all examples)
     """
+    # todo: need to be implemented
     return
 
 
@@ -345,6 +377,7 @@ def get_predictions_for_data(model, data_iter):
     :param data_iter: torch iterator as given by the DataManager
     :return:
     """
+    # todo: need to be implemented
     return
 
 
@@ -358,6 +391,7 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     :param lr: learning rate to be used for optimization
     :param weight_decay: parameter for l2 regularization
     """
+    # todo: need to be implemented
     return
 
 
@@ -365,6 +399,7 @@ def train_log_linear_with_one_hot():
     """
     Here comes your code for training and evaluation of the log linear model with one hot representation.
     """
+    # todo: need to be implemented
     return
 
 
@@ -373,6 +408,7 @@ def train_log_linear_with_w2v():
     Here comes your code for training and evaluation of the log linear model with word embeddings
     representation.
     """
+    # todo: need to be implemented
     return
 
 
@@ -380,10 +416,12 @@ def train_lstm_with_w2v():
     """
     Here comes your code for training and evaluation of the LSTM model.
     """
+    # todo: need to be implemented
     return
 
 
 if __name__ == '__main__':
+    print("--------- LOG Linear with one hot ---------\n")
     train_log_linear_with_one_hot()
     # train_log_linear_with_w2v()
-    # train_lstm_with_w2v()
+    # train_lstm_with_w2v()import torch

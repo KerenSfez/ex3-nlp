@@ -554,9 +554,10 @@ def t_model_helper(model, name, dm, weight_decay, learning_rate, ep_num):
                                                     nn.BCEWithLogitsLoss(),
                                                     train_fun=True)
 
-    get_accuracies(dm, predication_lab, *get_rares_and_negs(dm))
-
-    get_graphs(h, name)
+    print(get_accuracies(dm, predication_lab, *get_rares_and_negs(dm)))
+    print('test accuracy: ', test_acc)
+    print('test loss: ', test_loss)
+    # get_graphs(h, name)
 
 
 def train_log_linear_with_one_hot():
@@ -598,8 +599,8 @@ if __name__ == '__main__':
     print("****-------- LOG Linear with one hot --------****\n\n")
     train_log_linear_with_one_hot()
 
-    print("****-------- LOG Linear with w2v --------****\n\n")
-    train_log_linear_with_w2v()
-
-    print("****-------- LSTM with w2v --------****\n\n")
-    train_lstm_with_w2v()
+    # print("****-------- LOG Linear with w2v --------****\n\n")
+    # train_log_linear_with_w2v()
+    #
+    # print("****-------- LSTM with w2v --------****\n\n")
+    # train_lstm_with_w2v()
