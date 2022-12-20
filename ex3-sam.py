@@ -87,8 +87,8 @@ def load_word2vec():
     """
     import gensim.downloader as api
     wv_from_bin = api.load("word2vec-google-news-300")
-    vocab = list(wv_from_bin.vocab.keys())
-    print(wv_from_bin.vocab[vocab[0]])
+    vocab = list(wv_from_bin.key_to_index.keys())
+    print(wv_from_bin.key_to_index[vocab[0]])
     print("Loaded vocab size %i" % len(vocab))
     return wv_from_bin
 
@@ -295,8 +295,7 @@ class DataManager:
             self.sent_func = sentence_to_embedding
 
             self.sent_func_kwargs = {"seq_len": SEQ_LEN,
-                                     "word_to_vec":
-                                     create_or_load_slim_w2v(words_list),
+                                     "word_to_vec": create_or_load_slim_w2v(words_list),
                                      "embedding_dim": embedding_dim
                                      }
         elif data_type == W2V_AVERAGE:
@@ -365,6 +364,11 @@ class LSTM(nn.Module):
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
         super().__init__()
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
+
+
+
         self.LSTM = nn.LSTM(input_size=embedding_dim,
                             bidirectional=True,
                             batch_first=True,
@@ -375,15 +379,31 @@ class LSTM(nn.Module):
 
         return
 
+    # def forward(self, x):
+    #     # todo: need to be implemented
+    #     # Initialize hidden and cell states
+    #     h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size)
+    #     c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size)
+    #
+    #     # Apply dropout to input
+    #     x = self.dropout(x)
+    #
+    #     # Forward propagate LSTM
+    #     out, _ = self.LSTM(x, (h0, c0))
+    #
+    #     # Apply dropout to hidden states
+    #     out = self.dropout(out)
+    #
+    #     # Decode the hidden state of the last time step
+    #     out = self.linear(out[:, -1, :])
+    #     return out
+
     def forward(self, text):
         hid_lstm = self.LSTM(text)[1][0]
 
-        ho = hid_lstm[-2, :, :]
-        co = hid_lstm[-1, :, :]
-
-        x = torch.cat((ho, co), dim=1)
-
-        return self.linear(self.dropout(x))
+        return self.linear(self.dropout(torch.cat((hid_lstm[-2, :, :],
+                                                   hid_lstm[-1, :, :]),
+                                                  dim=1)))
 
     def predict(self, text):
         return predict_helper(self, text)
@@ -626,11 +646,11 @@ def train_lstm_with_w2v():
 
 
 if __name__ == '__main__':
-    print("****-------- LOG Linear with one hot --------****\n\n")
-    train_log_linear_with_one_hot()
+    # print("****-------- LOG Linear with one hot --------****\n\n")
+    # train_log_linear_with_one_hot()
 
     # print("****-------- LOG Linear with w2v --------****\n\n")
-    train_log_linear_with_w2v()
+    # train_log_linear_with_w2v()
     #
-    # print("****-------- LSTM with w2v --------****\n\n")
-    # train_lstm_with_w2v()
+    print("****-------- LSTM with w2v --------****\n\n")
+    train_lstm_with_w2v()
