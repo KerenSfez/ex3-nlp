@@ -179,32 +179,50 @@ def get_word_to_ind(words_list):
     return {words_list[i]: i for i in range(len(words_list))}
 
 
+# def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
+#     """
+#     this method gets a sentence and a word to vector mapping, and returns a
+#     list containing the words embeddings of the tokens in the sentence.
+#     :param sent: a sentence object
+#     :param word_to_vec: a word to vector mapping.
+#     :param seq_len: the fixed length for which the sentence will be mapped to.
+#     :param embedding_dim: the dimension of the w2v embedding
+#     :return: numpy ndarray of shape (seq_len, embedding_dim) with the
+#     representation of the sentence
+#     """
+#     sentences = sent.text[:min(len(sent.text), seq_len)]
+#
+#     embed = list()
+#     for i in range(len(sentences)):
+#         word = sentences[i]
+#         if word in word_to_vec:
+#             embed.append(word_to_vec[word])
+#         else:
+#             embed.append(np.zeros(embedding_dim))
+#
+#     while len(embed) < seq_len:
+#         embed.append(np.zeros(embedding_dim))
+#
+#     return np.array(embed)
+
 def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     """
-    this method gets a sentence and a word to vector mapping, and returns a
-    list containing the words embeddings of the tokens in the sentence.
+    this method gets a sentence and a word to vector mapping, and returns a list containing the
+    words embeddings of the tokens in the sentence.
     :param sent: a sentence object
     :param word_to_vec: a word to vector mapping.
     :param seq_len: the fixed length for which the sentence will be mapped to.
     :param embedding_dim: the dimension of the w2v embedding
-    :return: numpy ndarray of shape (seq_len, embedding_dim) with the
-    representation of the sentence
+    :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-    sentences = sent.text[:min(len(sent.text), seq_len)]
-
-    embed = list()
-    for i in range(len(sentences)):
-        word = sentences[i]
+    # todo: need to be implemented - done mais different de sam donc a checker
+    mylist = np.zeros(shape=(seq_len, embedding_dim))
+    outer_bound = min(len(sent.text), seq_len)
+    seq = sent[:outer_bound]
+    for i, word in enumerate(len(seq)):
         if word in word_to_vec:
-            embed.append(word_to_vec[word])
-        else:
-            embed.append(np.zeros(embedding_dim))
-
-    while len(embed) < seq_len:
-        embed.append(np.zeros(embedding_dim))
-
-    return np.array(embed)
-
+            mylist[i] = word_to_vec[word]
+    return mylist
 
 class OnlineDataset(Dataset):
     """
@@ -325,14 +343,20 @@ class DataManager:
 
 # ----------------------------------- Models ----------------------------------
 
-def predict_helper(obj, x):
-    probabilities = torch.sigmoid(obj.forward(x)).detach().numpy() \
-        .flatten()
-    predictions = np.zeros((probabilities >= 0.5).shape)
-    predictions[(probabilities >= 0.5)] = 1
+# def predict_helper(obj, x):
+#     probabilities = torch.sigmoid(obj.forward(x)).detach().numpy() \
+#         .flatten()
+#     predictions = np.zeros((probabilities >= 0.5).shape)
+#     predictions[(probabilities >= 0.5)] = 1
+#
+#     return predictions
 
-    return predictions
-
+def predict_helper(self, x):
+    with torch.no_grad():
+        predictions = self.forward(x)
+        predictions = torch.sigmoid(predictions)
+        predictions = predictions.numpy().flatten()
+        return [1 if pred > 0.5 else 0 for pred in predictions]
 
 class LSTM(nn.Module):
     """
@@ -341,8 +365,10 @@ class LSTM(nn.Module):
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
         super().__init__()
-        self.LSTM = nn.LSTM(input_size=embedding_dim, bidirectional=True,
-                            batch_first=True, hidden_size=hidden_dim,
+        self.LSTM = nn.LSTM(input_size=embedding_dim,
+                            bidirectional=True,
+                            batch_first=True,
+                            hidden_size=hidden_dim,
                             num_layers=n_layers)
         self.linear = nn.Linear(2 * hidden_dim, 1)
         self.dropout = nn.Dropout(dropout)
@@ -352,9 +378,12 @@ class LSTM(nn.Module):
     def forward(self, text):
         hid_lstm = self.LSTM(text)[1][0]
 
-        return self.linear(self.dropout(torch.cat((hid_lstm[-2, :, :],
-                                                   hid_lstm[-1, :, :]),
-                                                  dim=1)))
+        ho = hid_lstm[-2, :, :]
+        co = hid_lstm[-1, :, :]
+
+        x = torch.cat((ho, co), dim=1)
+
+        return self.linear(self.dropout(x))
 
     def predict(self, text):
         return predict_helper(self, text)
@@ -367,7 +396,6 @@ class LogLinear(nn.Module):
     def __init__(self, embedding_dim):
         super().__init__()
         self.linear = nn.Linear(in_features=embedding_dim, out_features=1)
-
         return
 
     def forward(self, x):
@@ -554,9 +582,11 @@ def t_model_helper(model, name, dm, weight_decay, learning_rate, ep_num):
                                                     nn.BCEWithLogitsLoss(),
                                                     train_fun=True)
 
-    print(get_accuracies(dm, predication_lab, *get_rares_and_negs(dm)))
+    truc = get_accuracies(dm, predication_lab, *get_rares_and_negs(dm))
     print('test accuracy: ', test_acc)
     print('test loss: ', test_loss)
+    print('rare: ', truc[0])
+    print('polarity: ', truc[1])
     # get_graphs(h, name)
 
 
@@ -600,7 +630,7 @@ if __name__ == '__main__':
     train_log_linear_with_one_hot()
 
     # print("****-------- LOG Linear with w2v --------****\n\n")
-    # train_log_linear_with_w2v()
+    train_log_linear_with_w2v()
     #
     # print("****-------- LSTM with w2v --------****\n\n")
     # train_lstm_with_w2v()

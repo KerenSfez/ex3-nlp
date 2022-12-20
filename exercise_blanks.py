@@ -292,17 +292,50 @@ class DataManager():
 
 # ------------------------------------ Models ----------------------------------------------------
 
+def predicter(self, x):
+    with torch.no_grad():
+        forward_predictions = self.forward(x)
+        non_flatten_predictions = torch.sigmoid(forward_predictions)
+        predictions = non_flatten_predictions.numpy().flatten()
+        return [1 if pred > 0.5 else 0 for pred in predictions]
+
 class LSTM(nn.Module):
     """
     An LSTM for sentiment analysis with architecture as described in the exercise description.
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
         # todo: need to be implemented
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
+        self.dropout = nn.Dropout(dropout)
+        self.lstm = nn.LSTM(input_size=embedding_dim,
+                            bidirectional=True,
+                            hidden_size=hidden_dim,
+                            num_layers=n_layers,
+                            batch_first=True,
+                            )
+        self.linear = nn.Linear(2*hidden_dim, 1)
         return
 
-    def forward(self, text):
+    def forward(self, x):
         # todo: need to be implemented
-        return
+        # Initialize hidden and cell states
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size)
+
+        # Apply dropout to input
+        x = self.dropout(x)
+
+        # Forward propagate LSTM
+        out, _ = self.lstm(x, (h0, c0))
+
+        # Apply dropout to hidden states
+        out = self.dropout(out)
+
+        # Decode the hidden state of the last time step
+        out = self.fc(out[:, -1, :])
+        return out
 
     def predict(self, text):
         # todo: need to be implemented
@@ -314,16 +347,18 @@ class LogLinear(nn.Module):
     general class for the log-linear models for sentiment analysis.
     """
     def __init__(self, embedding_dim):
-        # todo: need to be implemented
+        # todo: done
+        super().__init__()
+        self.linear = nn.Linear(in_features=embedding_dim, out_features=1)
         return
 
     def forward(self, x):
-        # todo: need to be implemented
-        return
+        # todo: done
+        return self.linear(x)
 
     def predict(self, x):
-        # todo: need to be implemented
-        return
+        # todo: done
+        return predicter(self, x)
 
 
 # ------------------------- training functions -------------
