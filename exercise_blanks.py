@@ -466,16 +466,17 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     valid_acc = []
 
     for epoch in range(n_epochs):
-        avg_loss, avg_acc = train_epoch(model, data_manager.get_torch_iterator(data_subset=TRAIN), optimizer, F.cross_entropy)
+        avg_loss, avg_acc = train_epoch(model, data_manager.get_torch_iterator(data_subset=TRAIN),
+                                        F.binary_cross_entropy_with_logits)
         train_loss.append(avg_loss)
         train_acc.append(avg_acc)
 
-        val_loss, val_acc = evaluate(model, data_manager.get_torch_iterator(data_subset=VAL), F.cross_entropy)
+        val_loss, val_acc = evaluate(model, data_manager.get_torch_iterator(data_subset=VAL),
+                                     F.binary_cross_entropy_with_logits)
         valid_loss.append(val_loss)
         valid_acc.append(val_acc)
 
     return train_loss, train_acc, valid_loss, valid_acc
-
 
 
 def train_log_linear_with_one_hot():
