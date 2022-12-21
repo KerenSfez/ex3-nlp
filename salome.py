@@ -179,7 +179,7 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     :param embedding_dim: the dimension of the w2v embedding
     :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-    # todo: done a nous
+    # todo:  done a nous
     words = sent.text[:min(len(sent.text), seq_len)]
     embeddings = np.zeros(shape=(seq_len, embedding_dim))
     for i, word in enumerate(words):
