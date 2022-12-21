@@ -471,9 +471,7 @@ def _get_accuracy_rates_for_special_subsets(data, model):
     negated_polarity_predictions = get_predictions_for_data(model, test_set)
 
     test_sentences = data.sentiment_dataset.get_test_set()
-
     labels = data.get_labels(TEST)
-
     rare_words = data_loader.get_rare_words_examples(test_sentences, data.sentiment_dataset)
     negated_polarity = data_loader.get_negated_polarity_examples(test_sentences)
 
@@ -493,7 +491,7 @@ def _draw_plots(epoch, train, validation, name, train_label, validation_label, y
     plt.show()
 
 def _train_and_evaluate_model(model, data, num_epochs, lr, weight_decay, model_type):
-    train_acc, train_loss, validation_acc, validation_loss = train_model(model, data, num_epochs, lr, weight_decay)
+    train_loss, train_acc, validation_loss, validation_acc = train_model(model, data, num_epochs, lr, weight_decay)
     _draw_plots(num_epochs, train_acc, validation_acc, "Accuracy", "Train Accuracy", "Validation Accuracy", "Accuracy Value")
     _draw_plots(num_epochs, train_loss, validation_loss, "Loss", "Train Loss", "Validation Loss", "Loss Value")
 
@@ -541,7 +539,7 @@ def train_lstm_with_w2v():
 
 if __name__ == '__main__':
      #train_log_linear_with_one_hot()
-    #train_log_linear_with_w2v()
+    # train_log_linear_with_w2v()
     train_lstm_with_w2v()
 
 
