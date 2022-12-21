@@ -147,7 +147,7 @@ def average_one_hots(sent, word_to_ind):
     :return:
     """
     # todo: done
-    ind = [word_to_ind[word] for word in sent]
+    ind = [word_to_ind[word] for word in sent.text]
     num_words = len(word_to_ind)
     oh_v = get_one_hot(num_words, ind)
     total = np.sum(oh_v)
@@ -466,7 +466,7 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     valid_acc = []
 
     for epoch in range(n_epochs):
-        avg_loss, avg_acc = train_epoch(model, data_manager.get_torch_iterator(data_subset=TRAIN),
+        avg_loss, avg_acc = train_epoch(model, data_manager.get_torch_iterator(data_subset=TRAIN), optimizer,
                                         F.binary_cross_entropy_with_logits)
         train_loss.append(avg_loss)
         train_acc.append(avg_acc)
@@ -479,12 +479,46 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     return train_loss, train_acc, valid_loss, valid_acc
 
 
+def _get_accuracy_rates_for_special_subsets(data, model):
+    test_set = data.get_torch_iterator(data_subset=TEST)
+    test_sentences = data.sentiment_dataset.get_test_set()
+    labels = data.get_labels(TEST)
+
+    rare_words = data_loader.get_rare_words_examples(test_sentences, data.sentiment_dataset)
+    negated_polarity = data_loader.get_negated_polarity_examples(test_sentences)
+
+    rare_words_predictions = get_predictions_for_data(model, test_set[rare_words])
+    negated_polarity_predictions = get_predictions_for_data(model, test_set[negated_polarity])
+
+    rare_words_accuracy = binary_accuracy(rare_words_predictions, labels[rare_words])
+    negated_polarity_accuracy = binary_accuracy(negated_polarity_predictions, labels[negated_polarity])
+
+    return rare_words_accuracy, negated_polarity_accuracy
+
+
+def _train_and_evaluate_model(model, data, num_epochs, lr, weight_decay, model_type):
+    train_acc, train_loss, validation_acc, validation_loss = train_model(model, data, num_epochs, lr, weight_decay)
+    # plot_graph(train_acc, train_loss, validation_acc, validation_loss, num_epochs, "Loss", "Accuracy", model_type)
+
+    test_loss, test_acc = evaluate(model, data.get_torch_iterator(TEST), nn.BCEWithLogitsLoss())
+    print(f"{model_type} - Test accuracy : ", test_acc)
+    print(f"{model_type} - Test loss : ", test_loss)
+
+    rare_rate, neg_rate = _get_accuracy_rates_for_special_subsets(data, model)
+    print(f"{model_type} - Test RARE accuracy : ", rare_rate)
+    print(f"{model_type} - Test NEGATIVE accuracy : ", neg_rate)
+
+
 def train_log_linear_with_one_hot():
     """
     Here comes your code for training and evaluation of the log linear model with one hot representation.
     """
     # todo: need to be implemented
-    return
+
+    data = DataManager(data_type=ONEHOT_AVERAGE, batch_size=64)
+    model = LogLinear(embedding_dim=data.get_input_shape()[0])
+    _train_and_evaluate_model(model, data, num_epochs=20, lr=0.01, weight_decay=0.0001,
+                             model_type="Log Linear With One Hot")
 
 
 def train_log_linear_with_w2v():
@@ -493,7 +527,10 @@ def train_log_linear_with_w2v():
     representation.
     """
     # todo: need to be implemented
-    return
+    data = DataManager(data_type=W2V_AVERAGE, embedding_dim=W2V_EMBEDDING_DIM, batch_size=64)
+    model = LogLinear(embedding_dim=data.get_input_shape()[0])
+    _train_and_evaluate_model(model, data, num_epochs=20, lr=0.01, weight_decay=0.0001,
+                              model_type="Word2Vec Log Linear")
 
 
 def train_lstm_with_w2v():
@@ -501,11 +538,18 @@ def train_lstm_with_w2v():
     Here comes your code for training and evaluation of the LSTM model.
     """
     # todo: need to be implemented
-    return
+    data = DataManager(data_type=W2V_SEQUENCE, embedding_dim=W2V_EMBEDDING_DIM, batch_size=64)
+    model = LSTM(embedding_dim=data.get_input_shape()[1], hidden_dim=100, n_layers=2, dropout=0.5)
+    _train_and_evaluate_model(model, data, num_epochs=4, lr=0.001, weight_decay=0.0001,
+                              model_type="LSTM with w2v")
 
 
 if __name__ == '__main__':
     print("--------- LOG Linear with one hot ---------\n")
     train_log_linear_with_one_hot()
-    # train_log_linear_with_w2v()
-    # train_lstm_with_w2v()import torch
+
+    print("--------- LOG Linear with @V ---------\n")
+    train_log_linear_with_w2v()
+
+    print("--------- LSTM with one hot ---------\n")
+    train_lstm_with_w2v()

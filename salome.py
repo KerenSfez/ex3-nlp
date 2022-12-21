@@ -348,23 +348,39 @@ class LSTM(nn.Module):
         # todo: done
         return predicter(self, text)
 
-
-
 class LogLinear(nn.Module):
     """
     general class for the log-linear models for sentiment analysis.
     """
-
     def __init__(self, embedding_dim):
+        # todo: done
         super().__init__()
-        self.linear = torch.nn.Linear(in_features=embedding_dim, out_features=1)
+        self.linear = nn.Linear(in_features=embedding_dim, out_features=1)
+        return
 
     def forward(self, x):
+        # todo: done
         return self.linear(x)
 
     def predict(self, x):
-        h1 = self.linear(x)
-        return nn.Sigmoid()(h1)
+        # todo: done
+        return predicter(self, x)
+
+# class LogLinear(nn.Module):
+#     """
+#     general class for the log-linear models for sentiment analysis.
+#     """
+#
+#     def __init__(self, embedding_dim):
+#         super().__init__()
+#         self.linear = torch.nn.Linear(in_features=embedding_dim, out_features=1)
+#
+#     def forward(self, x):
+#         return self.linear(x)
+#
+#     def predict(self, x):
+#         h1 = self.linear(x)
+#         return nn.Sigmoid()(h1)
 
 
 # ------------------------- training functions -------------
@@ -592,8 +608,8 @@ def train_lstm_with_w2v():
 
 
 if __name__ == '__main__':
-    # train_log_linear_with_one_hot()
-    # train_log_linear_with_w2v()
+    train_log_linear_with_one_hot()
+    train_log_linear_with_w2v()
     train_lstm_with_w2v()
 
 
