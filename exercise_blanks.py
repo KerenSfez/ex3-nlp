@@ -84,10 +84,11 @@ def load_word2vec():
     """
     import gensim.downloader as api
     wv_from_bin = api.load("word2vec-google-news-300")
-    vocab = list(wv_from_bin.vocab.keys())
-    print(wv_from_bin.vocab[vocab[0]])
+    vocab = list(wv_from_bin.key_to_index.keys())
+    print(wv_from_bin.key_to_index[vocab[0]])
     print("Loaded vocab size %i" % len(vocab))
     return wv_from_bin
+
 
 
 def create_or_load_slim_w2v(words_list, cache_w2v=False):
