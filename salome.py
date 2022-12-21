@@ -185,7 +185,6 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     for i, word in enumerate(words):
         if word in word_to_vec:
             embeddings[i] = word_to_vec[word]
-
     return embeddings
 
 
@@ -468,7 +467,9 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     return train_loss, train_acc, valid_loss, valid_acc
 
 
-def plot_graph(train_acc, train_loss, validation_acc, validation_loss, epoch, strLoss, strAcc, title):
+def plot_graph(train_acc, train_loss,
+               validation_acc, validation_loss,
+               epoch, strLoss, strAcc, title):
     """
     This function plots graph
     """
@@ -511,11 +512,23 @@ def _get_accuracy_rates_for_special_subsets(data, model):
                                                 labels[negated_polarity])
     return rare_words_accuracy, negated_polarity_accuracy
 
+def _draw_plots(epoch, train, validation, name, train_label, validation_label, ylabel):
+    x = list(range(epoch))
+    plt.plot(x, train, label=train_label)
+    plt.plot(x, validation, label=validation_label)
+    plt.title(name)
+    plt.xlabel("Epoch Number")
+    plt.ylabel(ylabel)
+    plt.legend()
+    plt.show()
 
 def _train_and_evaluate_model(model, data, num_epochs, lr, weight_decay, model_type):
     # todo: the followiong line will be used for the graph
     train_acc, train_loss, validation_acc, validation_loss = train_model(model, data, num_epochs, lr, weight_decay)
-    plot_graph(train_acc, train_loss, validation_acc, validation_loss, num_epochs, "Loss", "Accuracy", model_type)
+    # plot_graph(train_acc, train_loss, validation_acc, validation_loss, num_epochs, "Loss", "Accuracy", model_type)
+    _draw_plots(num_epochs, train_acc, validation_acc, "Accuracy", "Train Accuracy", "Validation Accuracy", "Accuracy Value")
+    _draw_plots(num_epochs, train_loss, validation_loss, "Loss", "Train Loss", "Validation Loss", "Loss Value")
+
 
     test_loss, test_acc = evaluate(model, data.get_torch_iterator(TEST), nn.BCEWithLogitsLoss())
     print(f"{model_type} - Accuracy : ", test_acc)

@@ -541,9 +541,10 @@ def train_lstm_with_w2v():
                               model_type="LSTM with w2v")
 
 
-def _draw_plots(h, name, first_label, second_label, ylabel):
-    pyplot.plot(h[1], label=first_label)
-    pyplot.plot(h[3], label=second_label)
+def _draw_plots(epoch, train, validation, name, train_label, validation_label, ylabel):
+    x = list(range(epoch))
+    pyplot.plot(x, train, label=train_label)
+    pyplot.plot(x, validation, label=validation_label)
     pyplot.title(name)
     pyplot.xlabel("Epoch Number")
     pyplot.ylabel(ylabel)
