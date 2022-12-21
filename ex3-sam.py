@@ -201,26 +201,6 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     return np.array(embed)
 
 
-def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
-    """
-    this method gets a sentence and a word to vector mapping, and returns a list containing the
-    words embeddings of the tokens in the sentence.
-    :param sent: a sentence object
-    :param word_to_vec: a word to vector mapping.
-    :param seq_len: the fixed length for which the sentence will be mapped to.
-    :param embedding_dim: the dimension of the w2v embedding
-    :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
-    """
-    # todo: need to be implemented - done mais different de sam donc a checker
-    mylist = np.zeros(shape=(seq_len, embedding_dim))
-    outer_bound = min(len(sent.text), seq_len)
-    seq = sent[:outer_bound]
-    for i, word in enumerate(len(seq)):
-        if word in word_to_vec:
-            mylist[i] = word_to_vec[word]
-    return mylist
-
-
 class OnlineDataset(Dataset):
     """
     A pytorch dataset which generates model inputs on the fly from sentences of

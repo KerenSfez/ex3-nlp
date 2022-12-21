@@ -179,28 +179,14 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     :param embedding_dim: the dimension of the w2v embedding
     :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-    # todo: done a sam
-    # mylist = np.zeros(shape=(seq_len, embedding_dim))
-    # outer_bound = min(len(sent.text), seq_len)
-    # seq = sent[:outer_bound]
-    # for i, word in enumerate(len(seq)):
-    #     if word in word_to_vec:
-    #         mylist[i] = word_to_vec[word]
-    # return mylist
-    sentences = sent.text[:min(len(sent.text), seq_len)]
-
-    embed = list()
-    for i in range(len(sentences)):
-        word = sentences[i]
+    # todo: done a nous
+    words = sent.text[:min(len(sent.text), seq_len)]
+    embeddings = np.zeros(shape=(seq_len, embedding_dim))
+    for i, word in enumerate(words):
         if word in word_to_vec:
-            embed.append(word_to_vec[word])
-        else:
-            embed.append(np.zeros(embedding_dim))
+            embeddings[i] = word_to_vec[word]
 
-    while len(embed) < seq_len:
-        embed.append(np.zeros(embedding_dim))
-
-    return np.array(embed)
+    return embeddings
 
 
 class OnlineDataset(Dataset):
@@ -317,7 +303,7 @@ class LSTM(nn.Module):
     An LSTM for sentiment analysis with architecture as described in the exercise description.
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
-        # todo: need to be implemented
+        # todo: done mais salome
         super().__init__()
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers

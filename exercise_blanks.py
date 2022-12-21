@@ -178,14 +178,13 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     :param embedding_dim: the dimension of the w2v embedding
     :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-    # todo: need to be implemented - done mais different de sam donc a checker
-    mylist = np.zeros(shape=(seq_len, embedding_dim))
-    outer_bound = min(len(sent.text), seq_len)
-    seq = sent[:outer_bound]
-    for i, word in enumerate(len(seq)):
+    words = sent.text[:min(len(sent.text), seq_len)]
+    embeddings = np.zeros(shape=(seq_len, embedding_dim))
+    for i, word in enumerate(words):
         if word in word_to_vec:
-            mylist[i] = word_to_vec[word]
-    return mylist
+            embeddings[i] = word_to_vec[word]
+
+    return embeddings
 
 
 class OnlineDataset(Dataset):
