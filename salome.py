@@ -91,7 +91,6 @@ def load_word2vec():
     return wv_from_bin
 
 
-
 def create_or_load_slim_w2v(words_list, cache_w2v=False):
     """
     returns word2vec dict only for words which appear in the dataset.
@@ -112,14 +111,14 @@ def create_or_load_slim_w2v(words_list, cache_w2v=False):
 
 def get_w2v_average(sent, word_to_vec, embedding_dim):
     """
-    This method gets a sentence and returns the average word embedding of
-    the words consisting the sentence.
+    This method gets a sentence and returns the average word embedding of the words consisting
+    the sentence.
     :param sent: the sentence object
     :param word_to_vec: a dictionary mapping words to their vector embeddings
     :param embedding_dim: the dimension of the word embedding vectors
     :return The average embedding vector as numpy ndarray.
     """
-    # todo: done
+    # todo: done a nous
     w2v_average = np.zeros(embedding_dim)
     num_words = 0
     for word in sent.text:
@@ -136,7 +135,7 @@ def get_one_hot(size, ind):
     :param ind: the entry index to turn to 1
     :return: numpy ndarray which represents the one-hot vector
     """
-    # todo: done
+    # todo: done a nous
     oh_v = np.zeros(size, dtype=np.float64)
     oh_v[ind] = 1
     return oh_v
@@ -165,7 +164,7 @@ def get_word_to_ind(words_list):
     :param words_list: a list of words
     :return: the dictionary mapping words to the index
     """
-    # todo: done
+    # todo: done a nous
     num_words = len(words_list)
     return {words_list[i]: i for i in range(num_words)}
 
@@ -180,14 +179,28 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     :param embedding_dim: the dimension of the w2v embedding
     :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-    # todo: need to be implemented - done mais different de sam donc a checker
-    mylist = np.zeros(shape=(seq_len, embedding_dim))
-    outer_bound = min(len(sent.text), seq_len)
-    seq = sent[:outer_bound]
-    for i, word in enumerate(len(seq)):
+    # todo: done a sam
+    # mylist = np.zeros(shape=(seq_len, embedding_dim))
+    # outer_bound = min(len(sent.text), seq_len)
+    # seq = sent[:outer_bound]
+    # for i, word in enumerate(len(seq)):
+    #     if word in word_to_vec:
+    #         mylist[i] = word_to_vec[word]
+    # return mylist
+    sentences = sent.text[:min(len(sent.text), seq_len)]
+
+    embed = list()
+    for i in range(len(sentences)):
+        word = sentences[i]
         if word in word_to_vec:
-            mylist[i] = word_to_vec[word]
-    return mylist
+            embed.append(word_to_vec[word])
+        else:
+            embed.append(np.zeros(embedding_dim))
+
+    while len(embed) < seq_len:
+        embed.append(np.zeros(embedding_dim))
+
+    return np.array(embed)
 
 
 class OnlineDataset(Dataset):
@@ -303,42 +316,46 @@ class LSTM(nn.Module):
     """
     An LSTM for sentiment analysis with architecture as described in the exercise description.
     """
-
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
+        # todo: need to be implemented
         super().__init__()
-        self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=n_layers, bidirectional=True,
-                            batch_first=True)
+        self.hidden_dim = hidden_dim
+        self.n_layers = n_layers
         self.dropout = nn.Dropout(dropout)
-        self.linear = nn.Linear(2 * hidden_dim, 1)
+        self.LSTM = nn.LSTM(input_size=embedding_dim,
+                            bidirectional=True,
+                            hidden_size=hidden_dim,
+                            num_layers=n_layers,
+                            batch_first=True,
+                            )
+        self.linear = nn.Linear(2*hidden_dim, 1)
+        return
 
     def forward(self, text):
-        _, (h, c) = self.lstm(text)
-        concat = torch.cat((h[-2, :, :], h[-1, :, :]), 1)
-        drop = self.dropout(concat)
-        final_output = self.linear(drop)
-        return final_output
+        hid_lstm = self.LSTM(text)[1][0]
+
+        return self.linear(self.dropout(torch.cat((hid_lstm[-2, :, :],
+                                                   hid_lstm[-1, :, :]),
+                                                  dim=1)))
 
     def predict(self, text):
-        return torch.sigmoid(self.forward(text))
+        # todo: done
+        return predicter(self, text)
 
 
 class LogLinear(nn.Module):
     """
     general class for the log-linear models for sentiment analysis.
     """
-
+    # todo: done a nous
     def __init__(self, embedding_dim):
-        # todo: done
         super().__init__()
         self.linear = nn.Linear(in_features=embedding_dim, out_features=1)
-        return
 
     def forward(self, x):
-        # todo: done
         return self.linear(x)
 
     def predict(self, x):
-        # todo: done
         return predicter(self, x)
 
 
@@ -353,7 +370,7 @@ def binary_accuracy(preds, y):
     :param y: a vector of true labels
     :return: scalar value - (<number of accurate predictions> / <number of examples>)
     """
-
+    # todo: salome
     if not isinstance(preds, np.ndarray):
         y = y.detach().numpy()
         preds = preds.detach().numpy()
@@ -366,14 +383,14 @@ def binary_accuracy(preds, y):
 
 def train_epoch(model, data_iterator, optimizer, criterion):
     """
-    This method operates one epoch (pass over the whole train set) of training of the given model,
+    This method operates  one epoch (pass over the whole train set) of training of the given model,
     and returns the accuracy and loss for this epoch
     :param model: the model we're currently training
     :param data_iterator: an iterator, iterating over the training data for the model.
     :param optimizer: the optimizer object for the training process.
     :param criterion: the criterion object for the training process.
     """
-    # todo: almost done a checker car gpt
+    # todo: done a nous
     model.train()
     final_loss, final_acc = 0.0, 0.0
 
@@ -399,6 +416,7 @@ def evaluate(model, data_iterator, criterion):
     :param criterion: the loss criterion used for evaluation
     :return: tuple of (average loss over all examples, average accuracy over all examples)
     """
+    # todo: done a nous
     model.eval()
     total_loss = 0.0
     total_accuracy = 0.0
@@ -424,6 +442,7 @@ def get_predictions_for_data(model, data_iter):
     :param data_iter: torch iterator as given by the DataManager
     :return:
     """
+    # todo: done a nous
     predictions = []
     for input, target in data_iter:
         output = model(input.float())
@@ -441,29 +460,33 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     :param n_epochs: number of times to go over the whole training set
     :param lr: learning rate to be used for optimization
     :param weight_decay: parameter for l2 regularization
-    :return  train_acc, train_loss, validation_acc, validation_loss
     """
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=lr, weight_decay=weight_decay)
-    train_acc = []
+    # todo: done a nous
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     train_loss = []
-    validation_acc = []
-    validation_loss = []
+    train_acc = []
+    valid_loss = []
+    valid_acc = []
+
     for epoch in range(n_epochs):
-        t_loss, t_acc, = train_epoch(model, data_manager.get_torch_iterator(data_subset=TRAIN), optimizer, nn.BCEWithLogitsLoss())
-        val_loss, val_acc = evaluate(model, data_manager.get_torch_iterator(data_subset=VAL), nn.BCEWithLogitsLoss())
+        avg_loss, avg_acc = train_epoch(model, data_manager.get_torch_iterator(data_subset=TRAIN), optimizer,
+                                        F.binary_cross_entropy_with_logits)
+        train_loss.append(avg_loss)
+        train_acc.append(avg_acc)
 
-        train_acc.append(t_acc)
-        train_loss.append(t_loss)
-        validation_acc.append(val_acc)
-        validation_loss.append(val_loss)
+        val_loss, val_acc = evaluate(model, data_manager.get_torch_iterator(data_subset=VAL),
+                                     F.binary_cross_entropy_with_logits)
+        valid_loss.append(val_loss)
+        valid_acc.append(val_acc)
 
-    return train_acc, train_loss, validation_acc, validation_loss
+    return train_loss, train_acc, valid_loss, valid_acc
 
 
 def plot_graph(train_acc, train_loss, validation_acc, validation_loss, epoch, strLoss, strAcc, title):
     """
     This function plots graph
     """
+    # todo: a salome
     x = list(range(epoch))
 
     # Train loss value and validation loss value  as function of the epoch num
@@ -485,42 +508,48 @@ def plot_graph(train_acc, train_loss, validation_acc, validation_loss, epoch, st
     plt.show()
 
 
-def special_subsets(data, model):
-    """
-    This function return the rare and negative accuracy rate for test set.
-    """
-    prediction = get_predictions_for_data(model, data.get_torch_iterator(data_subset=TEST))
-    sentence_list_set = data.sentiment_dataset.get_test_set()
+def _get_accuracy_rates_for_special_subsets(data, model):
+    # todo: notre mais ressemble a slome
+    test_set = data.get_torch_iterator(data_subset=TEST)
+    negated_polarity_predictions = get_predictions_for_data(model, test_set)
+
+    test_sentences = data.sentiment_dataset.get_test_set()
+
     labels = data.get_labels(TEST)
-    rare = data_loader.get_rare_words_examples(sentence_list_set, data.sentiment_dataset)
-    neg = data_loader.get_negated_polarity_examples(sentence_list_set)
-    rare_rate = binary_accuracy(prediction[rare], labels[rare])
-    neg_rate = binary_accuracy(prediction[neg], labels[neg])
-    return rare_rate, neg_rate
+
+    rare_words = data_loader.get_rare_words_examples(test_sentences, data.sentiment_dataset)
+    negated_polarity = data_loader.get_negated_polarity_examples(test_sentences)
+
+    rare_words_accuracy = binary_accuracy(negated_polarity_predictions[rare_words], labels[rare_words])
+    negated_polarity_accuracy = binary_accuracy(negated_polarity_predictions[negated_polarity],
+                                                labels[negated_polarity])
+    return rare_words_accuracy, negated_polarity_accuracy
+
+
+def _train_and_evaluate_model(model, data, num_epochs, lr, weight_decay, model_type):
+    # todo: the followiong line will be used for the graph
+    train_acc, train_loss, validation_acc, validation_loss = train_model(model, data, num_epochs, lr, weight_decay)
+    plot_graph(train_acc, train_loss, validation_acc, validation_loss, num_epochs, "Loss", "Accuracy", model_type)
+
+    test_loss, test_acc = evaluate(model, data.get_torch_iterator(TEST), nn.BCEWithLogitsLoss())
+    print(f"{model_type} - Accuracy : ", test_acc)
+    print(f"{model_type} - Loss : ", test_loss)
+
+    rare_rate, neg_rate = _get_accuracy_rates_for_special_subsets(data, model)
+    print(f"{model_type} - Rare Accuracy : ", rare_rate)
+    print(f"{model_type} - Negative Accuracy : ", neg_rate)
 
 
 def train_log_linear_with_one_hot():
     """
     Here comes your code for training and evaluation of the log linear model with one hot representation.
     """
+    # todo: done - a nous
+
     data = DataManager(data_type=ONEHOT_AVERAGE, batch_size=64)
-    lr = 0.01
-    weight_decay = 0.0001
-    num_epochs = 20
     model = LogLinear(embedding_dim=data.get_input_shape()[0])
-    model_type = "Log Linear With One Hot"
-    train_acc, train_loss, validation_acc, validation_loss = train_model(model, data, num_epochs, lr, weight_decay)
-    plot_graph(train_acc, train_loss, validation_acc, validation_loss, num_epochs, "Loss", "Accuracy", model_type)
-
-    # The test accuracy and loss
-    test_loss, test_acc = evaluate(model, data.get_torch_iterator(TEST), nn.BCEWithLogitsLoss())
-    print("Log Linear With One Hot - Test accuracy : ", test_acc)
-    print("Log Linear With One Hot - Test loss : ", test_loss)
-
-    # Rare and Neg accuracy on the test set
-    rare_rate, neg_rate = special_subsets(data, model)
-    print("Log Linear With One Hot  - Test RARE accuracy : ", rare_rate)
-    print("Log Linear With One Hot  - Test NEGATIVE accuracy : ", neg_rate)
+    _train_and_evaluate_model(model, data, num_epochs=20, lr=0.01, weight_decay=0.0001,
+                             model_type="Log Linear with One Hot")
 
 
 def train_log_linear_with_w2v():
@@ -528,53 +557,28 @@ def train_log_linear_with_w2v():
     Here comes your code for training and evaluation of the log linear model with word embeddings
     representation.
     """
+    # Todo: done - a nous
     data = DataManager(data_type=W2V_AVERAGE, embedding_dim=W2V_EMBEDDING_DIM, batch_size=64)
-    lr = 0.01
-    weight_decay = 0.0001
-    num_epochs = 20
     model = LogLinear(embedding_dim=data.get_input_shape()[0])
-    model_type = "Word2Vec Log Linear"
-    train_acc, train_loss, validation_acc, validation_loss = train_model(model, data, num_epochs, lr, weight_decay)
-    plot_graph(train_acc, train_loss, validation_acc, validation_loss, num_epochs, "Loss", "Accuracy", model_type)
-
-    # The test accuracy and loss
-    test_loss, test_acc = evaluate(model, data.get_torch_iterator(TEST), nn.BCEWithLogitsLoss())
-    print("Word2Vec Log Linear - Test accuracy : ", test_acc)
-    print("Word2Vec Log Linear - Test loss : ", test_loss)
-
-    # Rare and Neg accuracy on the test set
-    rare_rate, neg_rate = special_subsets(data, model)
-    print("Word2Vec Log Linear - Test RARE accuracy : ", rare_rate)
-    print("Word2Vec Log Linear - Test NEGATIVE accuracy : ", neg_rate)
+    _train_and_evaluate_model(model, data, num_epochs=20, lr=0.01, weight_decay=0.0001,
+                              model_type="Log Linear with Word2Vec")
 
 
 def train_lstm_with_w2v():
     """
     Here comes your code for training and evaluation of the LSTM model.
     """
+    # todo: done - a nous
     data = DataManager(data_type=W2V_SEQUENCE, embedding_dim=W2V_EMBEDDING_DIM, batch_size=64)
-    lr = 0.001
-    weight_decay = 0.0001
-    dropout = 0.5
-    num_epochs = 4
-    model = LSTM(embedding_dim=data.get_input_shape()[1], hidden_dim=100, n_layers=2, dropout=dropout)
-    model_type = "LSTM with w2v"
-    train_acc, train_loss, validation_acc, validation_loss = train_model(model, data, num_epochs, lr, weight_decay)
-    plot_graph(train_acc, train_loss, validation_acc, validation_loss, num_epochs, "Loss", "Accuracy", model_type)
-
-    # The test accuracy and loss
-    test_loss, test_acc = evaluate(model, data.get_torch_iterator(TEST), nn.BCEWithLogitsLoss())
-    print("LSTM with Word2Vec - Test accuracy : ", test_acc)
-    print("LSTM with Word2Vec - Test loss : ", test_loss)
-
-    # Rare and Neg accuracy on the test set
-    rare_rate, neg_rate = special_subsets(data, model)
-    print("LSTM with Word2Vec  - Test RARE accuracy : ", rare_rate)
-    print("LSTM with Word2Vec  - Test NEGATIVE accuracy : ", neg_rate)
+    model = LSTM(embedding_dim=data.get_input_shape()[1], hidden_dim=100, n_layers=2, dropout=0.5)
+    _train_and_evaluate_model(model, data, num_epochs=4, lr=0.001, weight_decay=0.0001,
+                              model_type="LSTM with w2v")
 
 
 if __name__ == '__main__':
-    train_log_linear_with_one_hot()
+    # train_log_linear_with_one_hot()
+    # train_log_linear_with_w2v()
+    train_lstm_with_w2v()
 
 
 

@@ -156,16 +156,11 @@ def average_one_hots(sent, word_to_ind):
     :param word_to_ind: a mapping between words to indices
     :return:
     """
-
     index = list()
-
     for word in sent.text:
         index.append(word_to_ind[word])
-
     numerator = get_one_hot(len(word_to_ind), index)
-
     denominator = np.sum(numerator)
-
     return numerator/denominator
 
 
@@ -179,31 +174,32 @@ def get_word_to_ind(words_list):
     return {words_list[i]: i for i in range(len(words_list))}
 
 
-# def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
-#     """
-#     this method gets a sentence and a word to vector mapping, and returns a
-#     list containing the words embeddings of the tokens in the sentence.
-#     :param sent: a sentence object
-#     :param word_to_vec: a word to vector mapping.
-#     :param seq_len: the fixed length for which the sentence will be mapped to.
-#     :param embedding_dim: the dimension of the w2v embedding
-#     :return: numpy ndarray of shape (seq_len, embedding_dim) with the
-#     representation of the sentence
-#     """
-#     sentences = sent.text[:min(len(sent.text), seq_len)]
-#
-#     embed = list()
-#     for i in range(len(sentences)):
-#         word = sentences[i]
-#         if word in word_to_vec:
-#             embed.append(word_to_vec[word])
-#         else:
-#             embed.append(np.zeros(embedding_dim))
-#
-#     while len(embed) < seq_len:
-#         embed.append(np.zeros(embedding_dim))
-#
-#     return np.array(embed)
+def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
+    """
+    this method gets a sentence and a word to vector mapping, and returns a
+    list containing the words embeddings of the tokens in the sentence.
+    :param sent: a sentence object
+    :param word_to_vec: a word to vector mapping.
+    :param seq_len: the fixed length for which the sentence will be mapped to.
+    :param embedding_dim: the dimension of the w2v embedding
+    :return: numpy ndarray of shape (seq_len, embedding_dim) with the
+    representation of the sentence
+    """
+    sentences = sent.text[:min(len(sent.text), seq_len)]
+
+    embed = list()
+    for i in range(len(sentences)):
+        word = sentences[i]
+        if word in word_to_vec:
+            embed.append(word_to_vec[word])
+        else:
+            embed.append(np.zeros(embedding_dim))
+
+    while len(embed) < seq_len:
+        embed.append(np.zeros(embedding_dim))
+
+    return np.array(embed)
+
 
 def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     """
@@ -223,6 +219,7 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
         if word in word_to_vec:
             mylist[i] = word_to_vec[word]
     return mylist
+
 
 class OnlineDataset(Dataset):
     """
@@ -357,6 +354,7 @@ def predict_helper(self, x):
         predictions = torch.sigmoid(predictions)
         predictions = predictions.numpy().flatten()
         return [1 if pred > 0.5 else 0 for pred in predictions]
+
 
 class LSTM(nn.Module):
     """

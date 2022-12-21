@@ -26,7 +26,7 @@ VAL = "val"
 TEST = "test"
 
 
-# TODO: not edit ------------------------------------------ Helper methods and classes --------------------------
+# ------------------------------------------ Helper methods and classes --------------------------
 
 def get_available_device():
     """
@@ -88,7 +88,6 @@ def load_word2vec():
     print(wv_from_bin.key_to_index[vocab[0]])
     print("Loaded vocab size %i" % len(vocab))
     return wv_from_bin
-
 
 
 def create_or_load_slim_w2v(words_list, cache_w2v=False):
@@ -297,9 +296,8 @@ class DataManager():
 def predicter(self, x):
     with torch.no_grad():
         forward_predictions = self.forward(x)
-        non_flatten_predictions = torch.sigmoid(forward_predictions)
-        predictions = non_flatten_predictions.numpy().flatten()
-        return [1 if pred > 0.5 else 0 for pred in predictions]
+        return nn.Sigmoid()(forward_predictions)
+
 
 class LSTM(nn.Module):
     """
@@ -311,7 +309,7 @@ class LSTM(nn.Module):
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
         self.dropout = nn.Dropout(dropout)
-        self.lstm = nn.LSTM(input_size=embedding_dim,
+        self.LSTM = nn.LSTM(input_size=embedding_dim,
                             bidirectional=True,
                             hidden_size=hidden_dim,
                             num_layers=n_layers,
@@ -430,7 +428,6 @@ def evaluate(model, data_iterator, criterion):
 
 def get_predictions_for_data(model, data_iter):
     """
-
     This function should iterate over all batches of examples from data_iter and return all of the models
     predictions as a numpy ndarray or torch tensor (or list if you prefer). the prediction should be in the
     same order of the examples returned by data_iter.
@@ -480,21 +477,20 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
 
 
 def _get_accuracy_rates_for_special_subsets(data, model):
+    # todo: notre mais ressemble a slome
     test_set = data.get_torch_iterator(data_subset=TEST)
+    negated_polarity_predictions = get_predictions_for_data(model, test_set)
+
     test_sentences = data.sentiment_dataset.get_test_set()
+
     labels = data.get_labels(TEST)
-
-
 
     rare_words = data_loader.get_rare_words_examples(test_sentences, data.sentiment_dataset)
     negated_polarity = data_loader.get_negated_polarity_examples(test_sentences)
 
-    rare_words_predictions = get_predictions_for_data(model, test_set[rare_words])
-    negated_polarity_predictions = get_predictions_for_data(model, test_set[negated_polarity])
-
-    rare_words_accuracy = binary_accuracy(rare_words_predictions, labels[rare_words])
-    negated_polarity_accuracy = binary_accuracy(negated_polarity_predictions, labels[negated_polarity])
-
+    rare_words_accuracy = binary_accuracy(negated_polarity_predictions[rare_words], labels[rare_words])
+    negated_polarity_accuracy = binary_accuracy(negated_polarity_predictions[negated_polarity],
+                                                labels[negated_polarity])
     return rare_words_accuracy, negated_polarity_accuracy
 
 
