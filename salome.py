@@ -112,23 +112,21 @@ def create_or_load_slim_w2v(words_list, cache_w2v=False):
 
 def get_w2v_average(sent, word_to_vec, embedding_dim):
     """
-    This method gets a sentence and returns the average word embedding of the words consisting
-    the sentence.
+    This method gets a sentence and returns the average word embedding of
+    the words consisting the sentence.
     :param sent: the sentence object
     :param word_to_vec: a dictionary mapping words to their vector embeddings
     :param embedding_dim: the dimension of the word embedding vectors
     :return The average embedding vector as numpy ndarray.
     """
-    w2v = np.zeros(embedding_dim)
-    counter_known_words = 0
+    # todo: done
+    w2v_average = np.zeros(embedding_dim)
+    num_words = 0
     for word in sent.text:
         if word in word_to_vec:
-            w2v += word_to_vec[word]
-            counter_known_words += 1
-    if counter_known_words == 0:
-        return w2v
-    w2v_average = w2v / counter_known_words
-    return w2v_average
+            w2v_average += word_to_vec[word]
+            num_words += 1
+    return w2v_average/num_words if num_words > 0 else w2v_average
 
 
 def get_one_hot(size, ind):
@@ -138,25 +136,26 @@ def get_one_hot(size, ind):
     :param ind: the entry index to turn to 1
     :return: numpy ndarray which represents the one-hot vector
     """
-    hot_vector = np.zeros(size)
-    hot_vector[ind] = 1
-    return hot_vector
+    # todo: done
+    oh_v = np.zeros(size, dtype=np.float64)
+    oh_v[ind] = 1
+    return oh_v
 
 
 def average_one_hots(sent, word_to_ind):
     """
-    this method gets a sentence, and a mapping between words to indices, and returns the average
-    one-hot embedding of the tokens in the sentence.
+    this method gets a sentence, and a mapping between words to indices,
+    and returns the average one-hot embedding of the tokens in the sentence.
     :param sent: a sentence object.
     :param word_to_ind: a mapping between words to indices
     :return:
     """
-
-    vector = np.zeros(len(word_to_ind))
-    for word in sent.text:
-        vector += get_one_hot(len(word_to_ind), word_to_ind[word])
-    average = vector / len(sent.text)
-    return average
+    # todo: done
+    ind = [word_to_ind[word] for word in sent.text]
+    num_words = len(word_to_ind)
+    oh_v = get_one_hot(num_words, ind)
+    total = np.sum(oh_v)
+    return oh_v/total
 
 
 def get_word_to_ind(words_list):
@@ -166,12 +165,9 @@ def get_word_to_ind(words_list):
     :param words_list: a list of words
     :return: the dictionary mapping words to the index
     """
-    word_to_ind = {}
-    i = 0
-    for word in words_list:
-        word_to_ind[word] = i
-        i += 1
-    return word_to_ind
+    # todo: done
+    num_words = len(words_list)
+    return {words_list[i]: i for i in range(num_words)}
 
 
 def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
@@ -184,28 +180,14 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     :param embedding_dim: the dimension of the w2v embedding
     :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-
-    if len(sent.text) == seq_len:
-        text_sentence  = sent.text
-
-    elif len(sent.text) > seq_len:
-        text_sentence = sent.text[:seq_len]
-
-    else:
-        text_sentence = seq_len * [0]
-        text_sentence[:len(sent.text)] = sent.text
-
-    word_to_vec[0] = np.zeros(embedding_dim)
-    embedding = []
-    for word in text_sentence:
+    # todo: need to be implemented - done mais different de sam donc a checker
+    mylist = np.zeros(shape=(seq_len, embedding_dim))
+    outer_bound = min(len(sent.text), seq_len)
+    seq = sent[:outer_bound]
+    for i, word in enumerate(len(seq)):
         if word in word_to_vec:
-            vec = word_to_vec[word]
-            embedding.append(vec)
-        else:
-            null_vec = np.zeros(embedding_dim)
-            embedding.append(null_vec)
-
-    return np.array(embedding)
+            mylist[i] = word_to_vec[word]
+    return mylist
 
 
 class OnlineDataset(Dataset):
@@ -239,8 +221,7 @@ class DataManager():
     evaluation.
     """
 
-    def __init__(self, data_type=ONEHOT_AVERAGE, use_sub_phrases=True, dataset_path="stanfordSentimentTreebank",
-                 batch_size=50,
+    def __init__(self, data_type=ONEHOT_AVERAGE, use_sub_phrases=True, dataset_path="stanfordSentimentTreebank", batch_size=50,
                  embedding_dim=None):
         """
         builds the data manager used for training and evaluation.
@@ -313,6 +294,11 @@ class DataManager():
 
 # ------------------------------------ Models ----------------------------------------------------
 
+def predicter(self, x):
+    with torch.no_grad():
+        forward_predictions = self.forward(x)
+        return nn.Sigmoid()(forward_predictions)
+
 class LSTM(nn.Module):
     """
     An LSTM for sentiment analysis with architecture as described in the exercise description.
@@ -342,15 +328,18 @@ class LogLinear(nn.Module):
     """
 
     def __init__(self, embedding_dim):
+        # todo: done
         super().__init__()
-        self.linear = torch.nn.Linear(in_features=embedding_dim, out_features=1)
+        self.linear = nn.Linear(in_features=embedding_dim, out_features=1)
+        return
 
     def forward(self, x):
+        # todo: done
         return self.linear(x)
 
     def predict(self, x):
-        h1 = self.linear(x)
-        return nn.Sigmoid()(h1)
+        # todo: done
+        return predicter(self, x)
 
 
 # ------------------------- training functions -------------
@@ -377,26 +366,29 @@ def binary_accuracy(preds, y):
 
 def train_epoch(model, data_iterator, optimizer, criterion):
     """
-    This method operates  one epoch (pass over the whole train set) of training of the given model,
+    This method operates one epoch (pass over the whole train set) of training of the given model,
     and returns the accuracy and loss for this epoch
     :param model: the model we're currently training
     :param data_iterator: an iterator, iterating over the training data for the model.
     :param optimizer: the optimizer object for the training process.
     :param criterion: the criterion object for the training process.
     """
+    # todo: almost done a checker car gpt
     model.train()
-    los = []
-    accuracy = []
-    for input, target in data_iterator:
+    final_loss, final_acc = 0.0, 0.0
+
+    for inputs, lab in data_iterator:
         optimizer.zero_grad()
-        output = model(input.float())
-        loss = criterion(output.flatten(), target)
-        los.append(loss.item())
-        accuracy.append(binary_accuracy(nn.Sigmoid()(output), target))
+        outputs = model(inputs.float())
+        loss = criterion(outputs.flatten(), lab)
         loss.backward()
         optimizer.step()
+        final_loss += loss.item()
+        final_acc += binary_accuracy(nn.Sigmoid()(outputs), lab)
 
-    return np.mean(los), np.mean(accuracy)
+    final_loss /= len(data_iterator)
+    final_acc /= len(data_iterator)
+    return final_loss, final_acc
 
 
 def evaluate(model, data_iterator, criterion):
@@ -408,15 +400,18 @@ def evaluate(model, data_iterator, criterion):
     :return: tuple of (average loss over all examples, average accuracy over all examples)
     """
     model.eval()
-    los = []
-    accuracy = []
+    total_loss = 0.0
+    total_accuracy = 0.0
+    count = 0
     for input, target in data_iterator:
         output = model(input.float())
         loss = criterion(output.flatten(), target)
-        los.append(loss.item())
-        accuracy.append(binary_accuracy(nn.Sigmoid()(output), target))
+        accuracy = binary_accuracy(nn.Sigmoid()(output), target)
+        total_loss += loss.item()
+        total_accuracy += accuracy
+        count += 1
 
-    return np.mean(los), np.mean(accuracy)
+    return total_loss / count, total_accuracy / count
 
 
 def get_predictions_for_data(model, data_iter):
@@ -429,11 +424,12 @@ def get_predictions_for_data(model, data_iter):
     :param data_iter: torch iterator as given by the DataManager
     :return:
     """
-    preds = list()
+    predictions = []
     for input, target in data_iter:
-        preds += model.predict(input.float()).tolist()
-    pred = np.asarray(list(itertools.chain(*preds)))
-    return pred
+        output = model(input.float())
+        prediction = output.detach().numpy()
+        predictions.append(prediction)
+    return np.concatenate(predictions)
 
 
 def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
@@ -579,8 +575,7 @@ def train_lstm_with_w2v():
 
 if __name__ == '__main__':
     train_log_linear_with_one_hot()
-    train_log_linear_with_w2v()
-    train_lstm_with_w2v()
+
 
 
 

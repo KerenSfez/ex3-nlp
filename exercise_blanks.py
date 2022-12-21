@@ -440,9 +440,11 @@ def get_predictions_for_data(model, data_iter):
     """
     # todo: done sam
     predictions = []
-    for ex in data_iter:
-        predictions.extend(model.predict(ex[0]))
-    return np.array(predictions)
+    for input, target in data_iter:
+        with torch.no_grad():
+            forward_predictions = model(input.float())
+            predictions += nn.Sigmoid()(forward_predictions).tolist()
+    return predictions
 
 
 def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
