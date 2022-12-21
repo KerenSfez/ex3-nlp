@@ -371,6 +371,7 @@ def binary_accuracy(preds, y):
 
     return np.sum(preds == y) / y.shape[0]
 
+
 def train_epoch(model, data_iterator, optimizer, criterion):
     """
     This method operates one epoch (pass over the whole train set) of training of the given model,
