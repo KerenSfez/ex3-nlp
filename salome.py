@@ -313,12 +313,12 @@ class LSTM(nn.Module):
     def forward(self, text):
         hid_lstm = self.LSTM(text)[1][0]
 
-        ho = hid_lstm[-2, :, :]
-        co = hid_lstm[-1, :, :]
+        f_hid = hid_lstm[-2, :, :]
+        s_hid = hid_lstm[-1, :, :]
 
-        x = torch.cat((ho, co), dim=1)
+        fin_hid = torch.cat((f_hid, s_hid), dim=1)
 
-        return self.linear(self.dropout(x))
+        return self.linear(self.dropout(fin_hid))
 
     def predict(self, text):
         return predicter(self, text)
@@ -456,33 +456,6 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     return train_loss, train_acc, valid_loss, valid_acc
 
 
-def plot_graph(train_acc, train_loss,
-               validation_acc, validation_loss,
-               epoch, strLoss, strAcc, title):
-    """
-    This function plots graph
-    """
-    x = list(range(epoch))
-
-    # Train loss value and validation loss value  as function of the epoch num
-    plt.plot(x, train_loss, color='blue', label="Train Loss")
-    plt.plot(x, validation_loss, color='green', label="Validation Loss")
-    plt.ylabel(strLoss + " Value")
-    plt.xlabel("Epoch number")
-    plt.title("LOSS - " + title)
-    plt.legend(loc='lower right')
-    plt.show()
-
-    # Train acc value and validation acc value  as function of the epoch num
-    plt.plot(x, train_acc, color='blue', label="Train Accuracy")
-    plt.plot(x, validation_acc, color='green', label="Validation Accuracy")
-    plt.ylabel(strAcc + " Value")
-    plt.xlabel("Epoch number")
-    plt.title("ACCURACY - " + title)
-    plt.legend(loc='lower right')
-    plt.show()
-
-
 def _get_accuracy_rates_for_special_subsets(data, model):
     """
         This function calculates the accuracy of a model on subsets of data containing rare words and negated polarity.
@@ -568,7 +541,7 @@ def train_lstm_with_w2v():
 
 if __name__ == '__main__':
      #train_log_linear_with_one_hot()
-    train_log_linear_with_w2v()
-    #train_lstm_with_w2v()
+    #train_log_linear_with_w2v()
+    train_lstm_with_w2v()
 
 
