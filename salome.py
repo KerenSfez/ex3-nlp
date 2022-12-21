@@ -376,7 +376,7 @@ def binary_accuracy(preds, y):
 
 def train_epoch(model, data_iterator, optimizer, criterion):
     """
-    This method operates one epoch (pass over the whole train set) of training of the given model,
+    This method operates  one epoch (pass over the whole train set) of training of the given model,
     and returns the accuracy and loss for this epoch
     :param model: the model we're currently training
     :param data_iterator: an iterator, iterating over the training data for the model.
