@@ -85,10 +85,11 @@ def load_word2vec():
     """
     import gensim.downloader as api
     wv_from_bin = api.load("word2vec-google-news-300")
-    vocab = list(wv_from_bin.key_to_index.keys())
-    print(wv_from_bin.key_to_index[vocab[0]])
+    vocab = list(wv_from_bin.vocab.keys())
+    print(wv_from_bin.vocab[vocab[0]])
     print("Loaded vocab size %i" % len(vocab))
     return wv_from_bin
+
 
 def create_or_load_slim_w2v(words_list, cache_w2v=False):
     """
@@ -311,76 +312,44 @@ class DataManager():
 
 # ------------------------------------ Models ----------------------------------------------------
 
-def predicter(self, x):
-    with torch.no_grad():
-        forward_predictions = self.forward(x)
-        non_flatten_predictions = torch.sigmoid(forward_predictions)
-        predictions = non_flatten_predictions.numpy().flatten()
-        return [1 if pred > 0.5 else 0 for pred in predictions]
-
 class LSTM(nn.Module):
     """
     An LSTM for sentiment analysis with architecture as described in the exercise description.
     """
+
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
-        # todo: need to be implemented
         super().__init__()
-        self.hidden_dim = hidden_dim
-        self.n_layers = n_layers
+        self.lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=n_layers, bidirectional=True,
+                            batch_first=True)
         self.dropout = nn.Dropout(dropout)
-        self.LSTM = nn.LSTM(input_size=embedding_dim,
-                            bidirectional=True,
-                            hidden_size=hidden_dim,
-                            num_layers=n_layers,
-                            batch_first=True,
-                            )
-        self.linear = nn.Linear(2*hidden_dim, 1)
-        return
+        self.linear = nn.Linear(2 * hidden_dim, 1)
 
     def forward(self, text):
-        hid_lstm = self.LSTM(text)[1][0]
-
-        return self.linear(self.dropout(torch.cat((hid_lstm[-2, :, :],
-                                                   hid_lstm[-1, :, :]),
-                                                  dim=1)))
+        _, (h, c) = self.lstm(text)
+        concat = torch.cat((h[-2, :, :], h[-1, :, :]), 1)
+        drop = self.dropout(concat)
+        final_output = self.linear(drop)
+        return final_output
 
     def predict(self, text):
-        # todo: done
-        return predicter(self, text)
+        return torch.sigmoid(self.forward(text))
+
 
 class LogLinear(nn.Module):
     """
     general class for the log-linear models for sentiment analysis.
     """
+
     def __init__(self, embedding_dim):
-        # todo: done
         super().__init__()
-        self.linear = nn.Linear(in_features=embedding_dim, out_features=1)
-        return
+        self.linear = torch.nn.Linear(in_features=embedding_dim, out_features=1)
 
     def forward(self, x):
-        # todo: done
         return self.linear(x)
 
     def predict(self, x):
-        # todo: done
-        return predicter(self, x)
-
-# class LogLinear(nn.Module):
-#     """
-#     general class for the log-linear models for sentiment analysis.
-#     """
-#
-#     def __init__(self, embedding_dim):
-#         super().__init__()
-#         self.linear = torch.nn.Linear(in_features=embedding_dim, out_features=1)
-#
-#     def forward(self, x):
-#         return self.linear(x)
-#
-#     def predict(self, x):
-#         h1 = self.linear(x)
-#         return nn.Sigmoid()(h1)
+        h1 = self.linear(x)
+        return nn.Sigmoid()(h1)
 
 
 # ------------------------- training functions -------------

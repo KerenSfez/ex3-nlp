@@ -4,6 +4,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import os
+
+from matplotlib import pyplot
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 import operator
 import data_loader
@@ -317,24 +319,12 @@ class LSTM(nn.Module):
         self.linear = nn.Linear(2*hidden_dim, 1)
         return
 
-    def forward(self, x):
-        # todo: need to be implemented
-        # Initialize hidden and cell states
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size)
-        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size)
+    def forward(self, text):
+        hid_lstm = self.LSTM(text)[1][0]
 
-        # Apply dropout to input
-        x = self.dropout(x)
-
-        # Forward propagate LSTM
-        out, _ = self.lstm(x, (h0, c0))
-
-        # Apply dropout to hidden states
-        out = self.dropout(out)
-
-        # Decode the hidden state of the last time step
-        out = self.linear(out[:, -1, :])
-        return out
+        return self.linear(self.dropout(torch.cat((hid_lstm[-2, :, :],
+                                                   hid_lstm[-1, :, :]),
+                                                  dim=1)))
 
     def predict(self, text):
         # todo: done
@@ -365,15 +355,21 @@ class LogLinear(nn.Module):
 
 def binary_accuracy(preds, y):
     """
-    This method returns the accuracy of the predictions, relative to the labels.
+    This method returns tha accuracy of the predictions, relative to the labels.
     You can choose whether to use numpy arrays or tensors here.
     :param preds: a vector of predictions
     :param y: a vector of true labels
     :return: scalar value - (<number of accurate predictions> / <number of examples>)
     """
-    # todo: done - sam pas salome
-    return np.mean(preds == y)
 
+    if not isinstance(preds, np.ndarray):
+        y = y.detach().numpy()
+        preds = preds.detach().numpy()
+        preds = np.where(preds.T >= 0.5, 1, 0)
+    else:
+        preds = np.where(preds.T >= 0.5, 1, 0)
+
+    return np.sum(preds == y) / y.shape[0]
 
 def train_epoch(model, data_iterator, optimizer, criterion):
     """
@@ -390,12 +386,12 @@ def train_epoch(model, data_iterator, optimizer, criterion):
 
     for inputs, lab in data_iterator:
         optimizer.zero_grad()
-        outputs, _ = model(inputs)
-        loss = criterion(outputs.view(-1, outputs.shape[-1]), lab.view(-1))
+        outputs = model(inputs.float())
+        loss = criterion(outputs.flatten(), lab)
         loss.backward()
         optimizer.step()
         final_loss += loss.item()
-        final_acc += binary_accuracy(outputs, lab) # binary_accuracy(nn.Sigmoid()(outputs)
+        final_acc += binary_accuracy(nn.Sigmoid()(outputs), lab)
 
     final_loss /= len(data_iterator)
     final_acc /= len(data_iterator)
@@ -417,8 +413,8 @@ def evaluate(model, data_iterator, criterion):
 
     with torch.no_grad():
         for inputs, lab in data_iterator:
-            outputs = model(inputs)
-            loss = criterion(outputs, lab)
+            outputs = model(inputs.float())
+            loss = criterion(outputs.flatten(), lab)
             final_loss += loss.item() * inputs.size(0)
             _, predictions = torch.max(outputs, dim=1)
             final_correct += (torch.where(predictions == lab, torch.ones_like(predictions), torch.zeros_like(predictions)).sum().item())
@@ -484,6 +480,8 @@ def _get_accuracy_rates_for_special_subsets(data, model):
     test_sentences = data.sentiment_dataset.get_test_set()
     labels = data.get_labels(TEST)
 
+
+
     rare_words = data_loader.get_rare_words_examples(test_sentences, data.sentiment_dataset)
     negated_polarity = data_loader.get_negated_polarity_examples(test_sentences)
 
@@ -544,11 +542,20 @@ def train_lstm_with_w2v():
                               model_type="LSTM with w2v")
 
 
+def _draw_plots(h, name, first_label, second_label, ylabel):
+    pyplot.plot(h[1], label=first_label)
+    pyplot.plot(h[3], label=second_label)
+    pyplot.title(name)
+    pyplot.xlabel("Epoch Number")
+    pyplot.ylabel(ylabel)
+    pyplot.legend()
+    pyplot.show()
+
 if __name__ == '__main__':
     print("--------- LOG Linear with one hot ---------\n")
     train_log_linear_with_one_hot()
 
-    print("--------- LOG Linear with @V ---------\n")
+    print("--------- LOG Linear with 2V ---------\n")
     train_log_linear_with_w2v()
 
     print("--------- LSTM with one hot ---------\n")
